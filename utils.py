@@ -36,6 +36,7 @@ class Utils(object):
             }
             dicts = self.pdbc.get_user_memory_dict_by_username_langpair(user_id, src, tgt)
             if len(dicts) > 0:
+                dicts = json.loads(dicts[0][1])
                 postData['userdict'] = [dicts]
                 
             http = urllib3.PoolManager()
