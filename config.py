@@ -42,20 +42,20 @@ class Config:
         ('zh', 'lo'): 'http://116.52.164.142:5001/v2/translation',
         ('lo', 'zh'): 'http://116.52.164.142:5001/v2/translation',
         ('zh', 'my'): 'http://116.52.164.142:5001/v2/translation',
-        ('my', 'zh'): 'http://116.52.164.142:5001/v1/translation',
+        ('my', 'zh'): 'http://116.52.164.142:5001/v2/translation',
         ('zh', 'en'): 'http://116.52.164.142:5001/v2/translation',
         ('en', 'zh'): 'http://116.52.164.142:5001/v1/translation',
         ('zh', 'uy'): 'http://116.52.164.142:5001/v1/translation',
         ('uy', 'zh'): 'http://116.52.164.142:5001/v1/translation'
     }
 
-    PDF_MAX_PAGE = 2
+    PDF_MAX_PAGE = 1
     PDF_RECOGNIZE_TYPE = 2
-    PDF_RECOGNIZE_URL = "http://116.52.164.142:5003/p2/pdf_ctpn"
+    PDF_RECOGNIZE_URL = "http://116.52.164.142:5002/ocr"
     #PDF_RECOGNIZE_URL = "http://yuntrans.vip:8003/api/ocr/re"
     PDF_FONTS = "/home/jiangst/YuntransDocTranslatorV1.0.SERVERPY3/fonts/"
     PDF_RECOGNIZE_LANG = {
-        'my': 'mm_P',
+        'my': 'mm',
         'lo': 'lao',
         'zh': 'zh',
         'th': 'th',

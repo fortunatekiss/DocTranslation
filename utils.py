@@ -89,25 +89,16 @@ class Utils(object):
             print(e)
             return False
     
-    def pdf_recognize(self, src, file_path, file_name):
+    def pdf_recognize(self, src, img_data):
         try:
             url = Config.PDF_RECOGNIZE_URL
-            postData = {
-                "type": Config.PDF_RECOGNIZE_TYPE,
-                "lang": Config.PDF_RECOGNIZE_LANG[src]
-            }
-            files = [
-            ('file', (file_name, open(file_path, 'rb'), 'application/pdf'))
-            ]
+            
+            response = requests.request("POST", url, data=img_data)
 
-            response = requests.request("POST", url, data=postData, files=files)
-
-            #print(json.loads(response.text))
+            print(response.text)
             return json.loads(response.text)
         except Exception as e:
             print(e)
-            print("BBBBBBBBBBBB")
-            print(file_path)
             return False
 
     def generate_pdf(self, file_path, file_name, pages):

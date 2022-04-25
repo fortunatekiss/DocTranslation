@@ -42,13 +42,13 @@ class fileTrans(object):
 
         if file_type == '.doc' or file_type == '.docx':
             path, document_save_name = self.file_convert.doc_to_docx(Config.DOC_UPLOAD_FOLDER, document_save_name)
-            self.doc_trans.docTrans(path, document_save_name, src_lang, tgt_lang, document_id, user_id)
+            self.doc_trans.docTrans(path, document_save_name, src_lang, tgt_lang, document_id, user_id, document_name)
         elif file_type == '.xls' or file_type == '.xlsx':
             path, document_save_name = self.file_convert.xls_to_xlsx(Config.DOC_UPLOAD_FOLDER, document_save_name)
-            self.excel_trans.excelTrans(path, document_save_name, src_lang, tgt_lang, document_id, user_id)
+            self.excel_trans.excelTrans(path, document_save_name, src_lang, tgt_lang, document_id, user_id, document_name)
         elif file_type == '.pdf':
             path = Config.DOC_UPLOAD_FOLDER + document_save_name
-            self.pdf_trans.pdfTrans(path, document_save_name, src_lang, tgt_lang, document_id, user_id)
+            self.pdf_trans.pdf_trans_new(path, document_save_name, src_lang, tgt_lang, document_id, user_id, document_name)
         elif file_type == '.txt':
             isSplit = False
             path = os.path.join(Config.DOC_UPLOAD_FOLDER, document_save_name)
@@ -63,7 +63,7 @@ class fileTrans(object):
                 for split_file_name in split_file_names:
                     txt_file_path = os.path.join(Config.DOC_SPLIT_FOLDER, document_id, split_file_name)
                     try:
-                        self.txt_trans.txtTrans(txt_file_path, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id)
+                        self.txt_trans.txtTrans(txt_file_path, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id, document_name)
                     except Exception as e:
                         print("First translate error: "+ txt_file_path + " " + str(e))
                         error_files.append(txt_file_path)
@@ -72,7 +72,7 @@ class fileTrans(object):
                     for error_file in error_files:
                         try:
                             print("TRY AGAIN: " + error_file)
-                            self.txt_trans.txtTrans(error_file, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id)
+                            self.txt_trans.txtTrans(error_file, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id, document_name)
                         except Exception as e:
                             print("Second translate error: "+ error_file + " " + str(e))
                             self.p.updateDocumentStatus(document_id, '3')
@@ -96,7 +96,7 @@ class fileTrans(object):
                 # self.p.updateDocumentStatus(document_id, '2')
             else:
                 try:
-                    self.txt_trans.txtTrans(path, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id)
+                    self.txt_trans.txtTrans(path, document_save_name, src_lang, tgt_lang, document_id, isSplit, user_id, document_name)
                 except Exception as e:
                     print(e)
                     self.p.updateDocumentStatus(document_id, '3')

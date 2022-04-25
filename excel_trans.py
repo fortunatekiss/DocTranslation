@@ -20,11 +20,12 @@ class ExcelTrans(object):
         self.merge = merge()
         self.utils = Utils()
     
-    def sheetThread(self, wb, sheet, document_id, document_save_name, src, tgt, user_id):
+    def sheetThread(self, wb, sheet, document_id, document_save_name, src, tgt, user_id, document_name, sheet_index):
         colThreads = []
-        for col in sheet.iter_cols():
+        for i, col in enumerate(sheet.iter_cols()):
+            sheet_col = str(sheet_index) + "-" + str(i)
             aThread = threading.Thread(target=self.excelTransThread,
-                                       args=(wb, col, document_id, document_save_name, src, tgt, user_id))
+                                       args=(wb, col, document_id, document_save_name, src, tgt, user_id, document_name, sheet_col))
             colThreads.append(aThread)
 
         for thread in colThreads:
@@ -33,14 +34,15 @@ class ExcelTrans(object):
         for t in colThreads:
             t.join()
 
-    def excelTransThread(self, wb, col, document_id, document_save_name, src, tgt, user_id):
+    def excelTransThread(self, wb, col, document_id, document_save_name, src, tgt, user_id, document_name, sheet_col):
         id_index = 0
         source_len = 0
         source_list = []
         trans_list = []
         trans_result = []
         source_content = ""
-
+        record_src_text = ""
+        record_tgt_text = ""
         try:
             for cell in col:
                 if cell.value.rstrip('\n') is not None and str(cell.value).rstrip('\n').isdigit() == False:
@@ -71,21 +73,49 @@ class ExcelTrans(object):
                     trans_list.append(data)
                     id_index += 1
                     source_len += len(source_content)
+                    record_src_text += " " + source_content.strip('\n')
 
                     if source_len > Config.MAX_CHARACTERS:
                         result = self.utils.getNmtJson(src, tgt, trans_list, user_id)
+                        #记录翻译内容到数据库
+                        if result:
+                            self.p.record_src_text(user_id, src, tgt, record_src_text, len(record_src_text), document_name, sheet_col, document_id)
+                            record_src_text = ""
+                            for i in result:
+                                record_tgt_text += i['trans_text']
+                            self.p.record_tgt_text(user_id, record_tgt_text, document_name, sheet_col, document_id)
+                            record_tgt_text = ""  
+
+                        #if not result:
+                            #self.p.updateDocumentStatus(document_id, '3')
+                            #return False
                         trans_result.extend(result)
                         source_len = 0
                         trans_list = []
-
+            
+            # self.p.record_src_text(user_id, src, tgt, record_src_text, len(record_src_text), document_name, sheet_col, document_id)
+            
             if source_len != 0:
                 result = self.utils.getNmtJson(src, tgt, trans_list, user_id)
+                #记录翻译内容到数据库
+                if result:
+                    self.p.record_src_text(user_id, src, tgt, record_src_text, len(record_src_text), document_name, sheet_col, document_id)
+                    record_src_text = ""
+                    for i in result:
+                        record_tgt_text += i['trans_text']
+                    self.p.record_tgt_text(user_id, record_tgt_text, document_name, sheet_col, document_id)
+                    record_tgt_text = ""  
+
+                #if not result:
+                    #self.p.updateDocumentStatus(document_id, '3')
+                    #return False
                 trans_result.extend(result)
 
             trans_result_list = []
             for each in trans_result:
                 trans_result_list.extend(each['trans_text'].split("\n"))
 
+            record_tgt_text = ""
             for cell in col:
                 if cell.value.rstrip('\n') is not None and str(cell.value).rstrip('\n').isdigit() == False:
                     value = ""
@@ -99,22 +129,24 @@ class ExcelTrans(object):
                         else:
                             value += cut_untrans[0]
                     cell.value = value
+                    record_tgt_text += " " + value
                     del (source_list[0])
             wb.save(Config.DOC_RESULT_FOLDER + document_save_name)
+            # self.p.record_tgt_text(user_id, record_tgt_text, document_name, sheet_col, document_id)
         except Exception as e:
             print(e)
-            self.p.updateDocumentStatus(document_id, '3')
+            #self.p.updateDocumentStatus(document_id, '3')
             return False
 
-    def excelTrans(self, file_path, document_save_name, src, tgt, document_id, user_id):
+    def excelTrans(self, file_path, document_save_name, src, tgt, document_id, user_id, document_name):
         # p = pdbc.PdbcConnector()
         wb = load_workbook(filename=file_path)
         # ws = wb.active
 
         sheetThreads = []
-        for sheet in wb:
+        for i, sheet in enumerate(wb):
             aThread = threading.Thread(target=self.sheetThread,
-                                       args=(wb, sheet, document_id, document_save_name, src, tgt, user_id))
+                                       args=(wb, sheet, document_id, document_save_name, src, tgt, user_id, document_name, i))
             sheetThreads.append(aThread)
 
         for thread in sheetThreads:
@@ -126,7 +158,7 @@ class ExcelTrans(object):
             wb.save(Config.DOC_RESULT_FOLDER + document_save_name)
         except Exception as e:
             print(e)
-            self.p.updateDocumentStatus(document_id, '3')
+            #self.p.updateDocumentStatus(document_id, '3')
             return False
 
         self.p.updateDocumentStatus(document_id, '2')

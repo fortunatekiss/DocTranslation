@@ -17,6 +17,7 @@ class PdbcConnector(object):
     def dbConnector(self):
         try:
             db = pymysql.connect(host=self.db_host, user=self.db_user, password=self.db_pwd, database=self.db_name, port=self.db_port, charset='utf8')
+            print("DATABASE CONNECTED")
             #db = MySQLdb.connect(self.db_host, self.db_user, self.db_pwd, self.db_name, self.db_port)
             #db.set_character_set('utf8')
             return db
@@ -80,6 +81,20 @@ class PdbcConnector(object):
     def get_all_user_memory_dict_by_langpair(self, src, tgt):
         sql = "SELECT dict_id, dict FROM user_dict_tab WHERE src_lang = '%s' AND tgt_lang = '%s' AND del = '0'" % (src, tgt)
         return self.dbQuery(sql)
+    
+    def record_src_text(self, username, src, tgt, src_text, char_length, trans_source, doc_save_name, document_id):
+        src_text = src_text.replace("\"", "'")
+        sql = "INSERT INTO ol_translation_tab (user_id, src_lang, tgt_lang, src_text, char_length, trans_source, doc_save_name, doc_id) VALUES ('%s', '%s', '%s', \"%s\", %s, '%s', '%s', '%s') ON DUPLICATE KEY UPDATE src_text=CONCAT(IFNULL(src_text,''), \" %s\"), char_length=char_length+%s" % (username, src, tgt, src_text, char_length, trans_source, doc_save_name, document_id, src_text, char_length)
+        # sql_update = "UPDATE ol_translation_tab SET tgt_text=\"%s\" WHERE user_id='%s' AND trans_source='%s' AND doc_save_name='%s' AND doc_id='%s'" % (tgt_text, username, trans_source, doc_save_name, document_id)
+        # sql = "INSERT INTO ol_translation_tab (user_id, src_lang, tgt_lang, src_text, char_length, trans_source, doc_save_name, doc_id) VALUES ('%s', '%s', '%s', \"%s\", %s, '%s', '%s', '%s')" % (username, src, tgt, src_text, char_length, trans_source, doc_save_name, document_id)
+        print(sql)
+        return self.dbUpdate(sql)
+    
+    def record_tgt_text(self, username, tgt_text, trans_source, doc_save_name, document_id):
+        tgt_text = tgt_text.replace("\"", "'")
+        sql = "UPDATE ol_translation_tab SET tgt_text=CONCAT(IFNULL(tgt_text,''), \"%s\") WHERE user_id='%s' AND trans_source='%s' AND doc_save_name='%s' AND doc_id='%s'" % (tgt_text, username, trans_source, doc_save_name, document_id)
+        print(sql)
+        return self.dbUpdate(sql)
 
     # # 获取未翻译文档
     # def getUnTranslatedDocument(self, max_file):
